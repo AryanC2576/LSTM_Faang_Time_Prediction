@@ -12,7 +12,6 @@ def load_data(tickers, start_date, end_date):
             raise ValueError("No data downloaded. Check tickers and dates.")
 
         # Flatten the multi-level column index
-        # Handle cases where yf.download might return a single level index for a single ticker
         if isinstance(data.columns, pd.MultiIndex):
              # Ensure the order of levels is (Attribute, Ticker)
              # yfinance can sometimes return (Ticker, Attribute), so reorder if necessary
@@ -24,22 +23,18 @@ def load_data(tickers, start_date, end_date):
              data.columns = [f"{col[0]}_{col[1]}" for col in data.columns]
         else:
              # For a single ticker, columns might just be ['Open', 'High', 'Low', 'Close', 'Adj Close', 'Volume']
-             # In this case, we still want to rename them to 'Attribute_Ticker' format for consistency
              if len(tickers) == 1:
                  ticker = tickers[0]
                  data.columns = [f"{col}_{ticker}" for col in data.columns]
-             # If multiple tickers but not a MultiIndex, something is unexpected, but we proceed.
              pass # Columns are already in a flat format, hope they are named correctly
 
 
-        # Keep only 'Adj Close' and 'Volume' data
         adj_close_cols = [col for col in data.columns if 'Adj Close' in col]
         volume_cols = [col for col in data.columns if 'Volume' in col]
 
         # Check if we got Adj Close data for all tickers
         if len(adj_close_cols) != len(tickers):
              print(f"Warning: Did not find 'Adj Close' data for all tickers. Expected {len(tickers)}, found {len(adj_close_cols)}")
-             # Decide how to handle this: either raise an error or proceed with available data
              # For now, let's raise an error to be safe
              raise ValueError(f"Missing 'Adj Close' data for one or more tickers. Found columns: {adj_close_cols}")
 
